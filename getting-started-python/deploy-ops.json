@@ -1,0 +1,27 @@
+{
+  "id": "%%id%%",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 0.1,
+  "container": {
+    "docker": {
+      "type": "DOCKER",
+      "image": "%%tag%%",
+      "forcePullImage": false,
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 8888,
+          "protocol": "tcp",
+          "hostPort": 0,
+          "servicePort": 9005
+        }
+      ]
+    }
+  },
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "%%django_settings_module%%",
+    "ENV1": "%%env1%%"
+  },
+  "args": %%args%%
+}

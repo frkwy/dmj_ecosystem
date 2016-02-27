@@ -1,0 +1,67 @@
+Projects:
+    Name:
+        - yusukefurukawa 
+    SubName:
+        - test
+    Version:
+        - 0.0.6
+Tests:
+    From:
+        - 'python:latest'
+    Run: 
+        >
+        ADD requirements.txt .\n
+        ADD app_test.py .\n
+        RUN pip install -r requirements.txt\n
+    Phase:
+        - tests
+    Volume:
+        - volume1
+    RUN_COMMAND: 
+        - 'python app_test.py'
+Build:
+    From:
+        - 'python:latest'
+    Run:
+        >
+        ADD requirements.txt .\n
+        ADD app.py .\n
+        ADD app_test.py .\n
+        RUN pip install -r requirements.txt\n
+        CMD ["python", "app.py"]\n
+    Phase:
+        - build
+    Volume:
+        - null
+    ToMarathon:
+        - deploy-ops.json
+    ENV:
+        ENV1:
+            - hoge1
+        ENV2:
+            - hoge2
+        DJANGO_SETTINGS_MODULE:
+            - hogehoge.setting
+
+    ARGS: 
+        - '["python", "app.py"]'
+
+Deploy:
+    From:
+        - 'python:latest'
+    Run:
+        >
+        ADD requirements.txt .\n
+        RUN pip install -r requirements.txt\n
+        COPY latest_container_name.py .\n
+        COPY config.py .\n
+        COPY notice_container_name_to_slack.py .\n
+        CMD ["python3", "notice_container_name_to_slack.py", "--token=xxxxxxxxx", "--channel=xxxxxxxx"]\n
+    Phase:
+        - deploy
+    Volume:
+        - null
+    RUN_COMMAND: 
+        - "python3 notice_container_name_to_slack.py --token=xxxxxx --channel=xxxxx"
+Source:
+    - getting-started-python
