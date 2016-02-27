@@ -11,6 +11,7 @@ Tests:
     Run: 
         >
         ADD requirements.txt .\n
+        ADD app.py .\n
         ADD app_test.py .\n
         RUN pip install -r requirements.txt\n
     Phase:
