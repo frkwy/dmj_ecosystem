@@ -108,6 +108,9 @@ def generate_build_task(destination="test", yml=None):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
+        os.makedir("test")
+        os.makedir("build")
+        os.makedir("deploy")
         yml = yaml.load(open('{}'.format(sys.argv[2], 'r')))
         generate_build_task(sys.argv[1], yml)
         generate_docker_file(sys.argv[1], yml)
