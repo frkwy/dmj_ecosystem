@@ -11,40 +11,40 @@ def get_project_name(yml):
     id = '{project_name}{sub_name}'.format(project_name=project_name,
                                            sub_name=sub_name)
     try:
-        version = requests.get("{}/app/{}-{}".format(config.SIMPLE_INCREMENTER, yml['Projects']['Name'][0], sub_name[1:]), timeout=1).json()["next_version"]
+        version = requests.get('{}/app/{}-{}'.format(config.SIMPLE_INCREMENTER, yml['Projects']['Name'][0], sub_name[1:]), timeout=1).json()['next_version']
     except:
-        version = "0.0.1"
+        version = '0.0.1'
         
-    if config.SOURCE.endswith(".git"):
-        source_path = config.SOURCE.split("/")[-1].replace(".git", "")
+    if config.SOURCE.endswith('.git'):
+        source_path = config.SOURCE.split('/')[-1].replace('.git', '')
         if not os.path.exists(source_path):
-            os.system("git clone {}".format(config.SOURCE))
+            os.system('git clone {}'.format(config.SOURCE))
 
-    return {"name": yml['Projects']['Name'][0], "project_name": id, "sub_name": sub_name[1:], "source_path": source_path, "version": version}
+    return {'name': yml['Projects']['Name'][0], 'project_name': id, 'sub_name': sub_name[1:], 'source_path': source_path, 'version': version}
 
-def generate_docker_file(destination="test", yml=None, args=None):
-    TASK = {"test": "Tests", "build": "Build", "deploy": "Deploy", "slack": "Slack"}
+def generate_docker_file(destination='test', yml=None, args=None):
+    TASK = {'test': 'Tests', 'build': 'Build', 'deploy': 'Deploy', 'slack': 'Slack'}
     TASK = yml[TASK[destination]]
-    if "Ignore" in TASK and TASK["Ignore"]:
-        return 
+    if 'Ignore' in TASK and TASK['Ignore']:
+        return False
     with open('{}/Dockerfile'.format(destination), 'w') as f:
-        f.write("FROM {}\n".format(TASK["From"][0]))
-        for d in TASK["Run"].split("\\n"):
-            f.write (d+"\n")
+        f.write('FROM {}\n'.format(TASK['From'][0]))
+        for d in TASK['Run'].split('\\n'):
+            f.write (d+'\n')
+    return True
+def generate_build_task(destination='test', yml=None):
+    TASK = {'test': 'Tests', 'build': 'Build', 'deploy': 'Deploy', 'slack': 'Slack'}
 
-def generate_build_task(destination="test", yml=None):
-    TASK = {"test": "Tests", "build": "Build", "deploy": "Deploy", "slack": "Slack"}
-
-    project_name = get_project_name(yml)["project_name"]
-    version = get_project_name(yml)["version"]
-    source_path = get_project_name(yml)["source_path"]
-    name = get_project_name(yml)["name"]
-    sub_name = get_project_name(yml)["sub_name"]
+    project_name = get_project_name(yml)['project_name']
+    version = get_project_name(yml)['version']
+    source_path = get_project_name(yml)['source_path']
+    name = get_project_name(yml)['name']
+    sub_name = get_project_name(yml)['sub_name']
     task = yml[TASK[destination]]
 
     with open('{}.sh'.format(destination), 'w') as f:
-        f.write("#!/bin/bash\n")
-        if destination == "slack":
+        f.write('#!/bin/bash\n')
+        if destination == 'slack':
             f.write('cp notice/latest_container_name.py {}\n'.format(destination))
             f.write('cp base_requirements.txt {}\n'.format(destination))
             f.write('cp notice/notice_container_name_to_slack.py {}\n'.format(destination))
@@ -54,15 +54,15 @@ def generate_build_task(destination="test", yml=None):
         f.write ('cd {}\n'.format(destination))
         build_string = 'docker build -t {project_name} .\n'.format(project_name=project_name)
         f.write (build_string)
-        if destination in ("test", "slack"):
+        if destination in ('test', 'slack'):
             f.write('docker run -t {project_name} {args}\n'.format(project_name=project_name,
-               args=task["RUN_COMMAND"][0].replace('"', '\\"') if "RUN_COMMAND" in task and task["RUN_COMMAND"][0] else ""))
-        if destination == "build":
-            f.write("docker tag {project_name} {repo_url}/{project_name}\n".format(project_name=project_name, 
+               args=task['RUN_COMMAND'][0].replace("'", "\\'") if 'RUN_COMMAND' in task and task['RUN_COMMAND'][0] else ''))
+        if destination == 'build':
+            f.write('docker tag {project_name} {repo_url}/{project_name}\n'.format(project_name=project_name, 
                                                                                  repo_url=config.DOCKER_REPOGITORY_HOST))
-            f.write("docker push {repo_url}/{project_name}\n".format(project_name=project_name, 
+            f.write('docker push {repo_url}/{project_name}\n'.format(project_name=project_name, 
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
-            f.write("docker rmi {repo_url}/{project_name}\n".format(project_name=project_name, 
+            f.write('docker rmi {repo_url}/{project_name}\n'.format(project_name=project_name, 
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
                     
             f.write ('TO_MARATHON_JSON="{}"\n'.format(yml['Build']['ToMarathon'][0]))
@@ -122,32 +122,32 @@ if __name__ == '__main__':
 
     if len(sys.argv) > 1:
         try:
-            os.system("mkdir -p slack")
-            os.system("mkdir -p build")
-            os.system("mkdir -p deploy")
-            os.system("mkdir -p test")
+            os.system('mkdir -p slack')
+            os.system('mkdir -p build')
+            os.system('mkdir -p deploy')
+            os.system('mkdir -p test')
         except FileExistsError:
             pass
         
-        with open('{}'.format(source_path+os.sep+"build.yml", 'r')) as f:
+        with open('{}'.format(source_path+os.sep+'build.yml', 'r')) as f:
             yml = yaml.load(f.read())
         generate_build_task(args.phase, yml)
-        if generate_docker_file(args.phase, yml, args) == None:
-            print ("yml settings is empty")
+        if generate_docker_file(args.phase, yml, args) == False:
+            print ('yml settings is empty')
             sys.exit(1)
-        print ("generate {}.sh".format(args.phase))
-        os.system("cat  {}.sh".format(args.phase))
-        os.system("sh {}.sh".format(args.phase))
-        if args.phase == "deploy":
-            with open('{}'.format("slack.yml", 'r')) as f:
+        print ('generate {}.sh'.format(args.phase))
+        os.system('cat  {}.sh'.format(args.phase))
+        os.system('sh {}.sh'.format(args.phase))
+        if args.phase == 'deploy':
+            with open('{}'.format('slack.yml', 'r')) as f:
                 t = Template(f.read())
                 slack_yml = yaml.load(t.render(slack_token=args.slack_token, slack_channel=args.slack_channel))
-                generate_docker_file("slack", slack_yml, args)
-                generate_build_task("slack", slack_yml)
-            os.system("sh slack.sh".format(args.phase))
-        os.system("rm -rf test/*")
-        os.system("rm -rf build/*")
-        os.system("rm -rf deploy/*")
-        os.system("rm -rf slack/*")
+                generate_docker_file('slack', slack_yml, args)
+                generate_build_task('slack', slack_yml)
+            os.system('sh slack.sh'.format(args.phase))
+        os.system('rm -rf test/*')
+        os.system('rm -rf build/*')
+        os.system('rm -rf deploy/*')
+        os.system('rm -rf slack/*')
     else:
         generate_build_task()
