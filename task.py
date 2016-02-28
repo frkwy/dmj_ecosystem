@@ -8,6 +8,8 @@ import config
 import argparse
 from jinja2 import Template
 
+# test
+import django
 
 def get_project_name(yml):
     project_name = yml['Projects']['Name'][0]
