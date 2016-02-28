@@ -2,7 +2,6 @@
 import os
 import sys
 import yaml
-import shutil
 import requests
 import datetime
 import config
