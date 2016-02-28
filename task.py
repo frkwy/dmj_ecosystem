@@ -23,7 +23,6 @@ def generate_docker_file(destination="test", yml=None):
     with open('{}/Dockerfile'.format(destination), 'w') as f:
         f.write("FROM {}\n".format(TASK["From"][0]))
         for d in TASK["Run"].split("\\n"):
-            print (d)
             f.write (d+"\n")
 
 def generate_build_task(destination="test", yml=None):
@@ -37,9 +36,6 @@ def generate_build_task(destination="test", yml=None):
     task = yml[TASK[destination]]
 
     with open('{}.sh'.format(destination), 'w') as f:
-
-
-
         f.write("#!/bin/bash\n")
         if destination == "deploy":
             f.write('cp latest_container_name.py {}\n'.format(destination))
@@ -48,10 +44,10 @@ def generate_build_task(destination="test", yml=None):
         f.write ('cd {} && GIT_REVISION=`git rev-parse  --short HEAD` && cd ..\n'.format(source_path))
         for y in yml['Source']:
             f.write('cp -rf {}/* {}\n'.format(y, destination))
-
         f.write ('cd {}\n'.format(destination))
         build_string = 'docker build -t {project_name} .\n'.format(project_name=project_name)
         f.write (build_string)
+        
         if destination in ("test", "deploy"):
             f.write('docker run -t {project_name} {args}\n'.format(project_name=project_name,
                args=task["RUN_COMMAND"][0].replace('"', '\\"') if task["RUN_COMMAND"][0] else ""))
@@ -63,7 +59,6 @@ def generate_build_task(destination="test", yml=None):
             f.write("docker rmi {repo_url}/{project_name}\n".format(project_name=project_name, 
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
                     
-                    
             f.write ('TO_MARATHON_JSON="{}"\n'.format(yml['Build']['ToMarathon'][0]))
             f.write ('SOURCE_PATH="{}"\n'.format(source_path))
             f.write ('NAME="{}-{}"\n'.format(name,sub_name))
@@ -71,6 +66,7 @@ def generate_build_task(destination="test", yml=None):
             f.write ('PUSH_URL="{}"\n'.format(config.DOCKER_REPOGITORY_HOST+os.sep+project_name))
             f.write ('ID={}/{}\n'.format(project_name, version))
             f.write ('ARGS="{}"\n'.format(task["ARGS"][0].replace('"', '\\"') if task["ARGS"][0] else []))
+            
             if "ENV" in task:
                 for _env in task["ENV"]:
                     f.write ('{}={}\n'.format(_env, task["ENV"][_env][0]))
@@ -117,7 +113,6 @@ if __name__ == '__main__':
         #print ("generate {}.sh".format(sys.argv[1]))
         #os.system("cat  {}.sh".format(sys.argv[1]))
         #os.system("sh {}.sh".format(sys.argv[1]))
-        #os.system("rm -rf build/*")
         #print ("invalid task. Please input test or build or deploy")
     else:
         generate_build_task()
