@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import bootstrap_pip_install
 import os
 import sys
 import yaml
