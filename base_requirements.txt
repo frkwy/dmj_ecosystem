@@ -1,4 +1,3 @@
-Flask
 slackclient
 marathon
 requests
