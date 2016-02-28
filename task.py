@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os
 import sys
 import yaml
@@ -23,7 +24,6 @@ def generate_docker_file(destination="test", yml=None, args=None):
     with open('{}/Dockerfile'.format(destination), 'w') as f:
         f.write("FROM {}\n".format(TASK["From"][0]))
         for d in TASK["Run"].split("\\n"):
-            print (d)
             f.write (d+"\n")
 
 def generate_build_task(destination="test", yml=None):
@@ -37,9 +37,6 @@ def generate_build_task(destination="test", yml=None):
     task = yml[TASK[destination]]
 
     with open('{}.sh'.format(destination), 'w') as f:
-
-
-
         f.write("#!/bin/bash\n")
         if destination == "slack":
             f.write('cp notice/latest_container_name.py {}\n'.format(destination))
@@ -49,7 +46,6 @@ def generate_build_task(destination="test", yml=None):
         f.write ('cd {} && GIT_REVISION=`git rev-parse  --short HEAD` && cd ..\n'.format(source_path))
         for y in yml['Source']:
             f.write('cp -rf {}/* {}\n'.format(y, destination))
-
         f.write ('cd {}\n'.format(destination))
         build_string = 'docker build -t {project_name} .\n'.format(project_name=project_name)
         f.write (build_string)
@@ -64,7 +60,6 @@ def generate_build_task(destination="test", yml=None):
             f.write("docker rmi {repo_url}/{project_name}\n".format(project_name=project_name, 
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
                     
-                    
             f.write ('TO_MARATHON_JSON="{}"\n'.format(yml['Build']['ToMarathon'][0]))
             f.write ('SOURCE_PATH="{}"\n'.format(source_path))
             f.write ('NAME="{}-{}"\n'.format(name,sub_name))
@@ -72,6 +67,7 @@ def generate_build_task(destination="test", yml=None):
             f.write ('PUSH_URL="{}"\n'.format(config.DOCKER_REPOGITORY_HOST+os.sep+project_name))
             f.write ('ID={}/{}\n'.format(project_name, version))
             f.write ('ARGS="{}"\n'.format(task["ARGS"][0].replace('"', '\\"') if task["ARGS"][0] else []))
+            
             if "ENV" in task:
                 for _env in task["ENV"]:
                     f.write ('{}={}\n'.format(_env, task["ENV"][_env][0]))
