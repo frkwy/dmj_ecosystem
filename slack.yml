@@ -1,0 +1,28 @@
+Projects:
+    Name:
+        - yusukefurukawa 
+    SubName:
+        - slack
+    Version:
+        - 0.0.6
+
+Slack:
+    From:
+        - 'python:latest'
+    Run:
+        >
+        ADD base_requirements.txt .\n
+        RUN pip install -r base_requirements.txt\n
+        COPY latest_container_name.py .\n
+        COPY config.py .\n
+        COPY notice_container_name_to_slack.py .\n
+        CMD ["python3", "notice_container_name_to_slack.py", "--token={{slack_token}}", "--channel={{slack_channel}}"]\n
+    Phase:
+        - deploy
+    Volume:
+        - null
+    RUN_COMMAND: 
+        - "python3 notice_container_name_to_slack.py --token={{slack_token}} --channel={{slack_channel}}"
+
+Source:
+    - notice

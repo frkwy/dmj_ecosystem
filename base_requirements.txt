@@ -1,0 +1,3 @@
+slackclient
+marathon
+requests

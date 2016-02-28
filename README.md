@@ -6,13 +6,14 @@ This is continuation integration system of docker, marathon, jenkins
 ### Usage
 
 ####test phase
-./task.py test {yml.path}
-sh test.sh
+pip install pyyaml requests
+./task.py test --yaml={yml.path}  
 
 ####build phase
-./task.py build {yml.path}
-sh build.sh
+pip install pyyaml requests  
+./task.py build --yaml={yml.path}  
 
 ####deploy phase
-./task.py deploy {yml.path}
-sh deploy.sh
+pip install pyyaml requests  
+./task.py deploy  --yaml={yaml} --slack_token={token} --slack_channel={channel}  
+
