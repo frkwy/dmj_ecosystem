@@ -3,7 +3,6 @@ import os
 import sys
 import yaml
 import requests
-import datetime
 import config
 def get_project_name(yml):
     project_name = yml['Projects']['Name'][0]
