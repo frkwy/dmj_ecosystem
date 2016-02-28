@@ -35,15 +35,14 @@ Build:
     Volume:
         - null
     ToMarathon:
-        - deploy-ops.json
+        - to_marathon.json
     ENV:
         ENV1:
             - hoge1
         ENV2:
             - hoge2
         DJANGO_SETTINGS_MODULE:
-            - hogehoge.setting
-
+            - little.setting
     ARGS: 
         - '["python", "app.py"]'
 

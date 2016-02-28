@@ -14,6 +14,11 @@ def get_project_name(yml):
         version = requests.get("{}/app/{}-{}".format(config.SIMPLE_INCREMENTER, yml['Projects']['Name'][0], sub_name[1:]), timeout=1).json()["next_version"]
     except:
         version = "0.0.1"
+    
+    if yml["Source"][0].endswith(".git"):
+        os.system("git clone {}".format(yml["Source"][0]))
+        yml['Source'][0] = yml['Source'][0].split("/")[-1]
+
     return {"name": yml['Projects']['Name'][0], "project_name": id, "sub_name": sub_name[1:], "source_path": yml['Source'][0], "version": version}
 
 def generate_docker_file(destination="test", yml=None, args=None):
