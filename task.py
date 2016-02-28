@@ -14,12 +14,13 @@ def get_project_name(yml):
         version = requests.get("{}/app/{}-{}".format(config.SIMPLE_INCREMENTER, yml['Projects']['Name'][0], sub_name[1:]), timeout=1).json()["next_version"]
     except:
         version = "0.0.1"
-    
-    if yml["Source"][0].endswith(".git"):
-        os.system("git clone {}".format(yml["Source"][0]))
-        yml['Source'][0] = yml['Source'][0].split("/")[-1]
+        
+    if config.SOURCE.endswith(".git"):
+        source_path = config.SOURCE.split("/")[-1].replace(".git", "")
+        if not os.path.exists(source_path):
+            os.system("git clone {}".format(config.SOURCE))
 
-    return {"name": yml['Projects']['Name'][0], "project_name": id, "sub_name": sub_name[1:], "source_path": yml['Source'][0], "version": version}
+    return {"name": yml['Projects']['Name'][0], "project_name": id, "sub_name": sub_name[1:], "source_path": source_path, "version": version}
 
 def generate_docker_file(destination="test", yml=None, args=None):
     TASK = {"test": "Tests", "build": "Build", "deploy": "Deploy", "slack": "Slack"}
@@ -49,8 +50,7 @@ def generate_build_task(destination="test", yml=None):
             f.write('cp notice/notice_container_name_to_slack.py {}\n'.format(destination))
             f.write('cp config.py {}\n'.format(destination))
         f.write ('cd {} && GIT_REVISION=`git rev-parse  --short HEAD` && cd ..\n'.format(source_path))
-        for y in yml['Source']:
-            f.write('cp -rf {}/* {}\n'.format(y, destination))
+        f.write('cp -rf {}/* {}\n'.format(source_path, destination))
         f.write ('cd {}\n'.format(destination))
         build_string = 'docker build -t {project_name} .\n'.format(project_name=project_name)
         f.write (build_string)
@@ -111,23 +111,30 @@ from jinja2 import Template
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('phase', default="test", type=str,  help='message')
-    parser.add_argument('--yaml', default="hoge", type=str,  help='message')
     parser.add_argument('--slack_channel', default="hoge", type=str,  help='message')
     parser.add_argument('--slack_token', default="hoge", type=str,  help='message')
     args = parser.parse_args()
+
+    if config.SOURCE.endswith(".git"):
+        source_path = config.SOURCE.split("/")[-1].replace(".git", "")
+        if not os.path.exists(source_path):
+            os.system("git clone {}".format(config.SOURCE))
+
     if len(sys.argv) > 1:
         try:
-            os.makedirs("slack")
-            os.makedirs("test")
-            os.makedirs("build")
-            os.makedirs("deploy")
+            os.system("mkdir -p slack")
+            os.system("mkdir -p build")
+            os.system("mkdir -p deploy")
+            os.system("mkdir -p test")
         except FileExistsError:
             pass
         
-        with open('{}'.format(args.yaml, 'r')) as f:
+        with open('{}'.format(source_path+os.sep+"build.yml", 'r')) as f:
             yml = yaml.load(f.read())
         generate_build_task(args.phase, yml)
-        generate_docker_file(args.phase, yml, args)
+        if generate_docker_file(args.phase, yml, args) == None:
+            print ("yml settings is empty")
+            sys.exit(1)
         print ("generate {}.sh".format(args.phase))
         os.system("cat  {}.sh".format(args.phase))
         os.system("sh {}.sh".format(args.phase))
@@ -138,7 +145,6 @@ if __name__ == '__main__':
                 generate_docker_file("slack", slack_yml, args)
                 generate_build_task("slack", slack_yml)
             os.system("sh slack.sh".format(args.phase))
-        #print ("invalid task. Please input test or build or deploy")
         os.system("rm -rf test/*")
         os.system("rm -rf build/*")
         os.system("rm -rf deploy/*")

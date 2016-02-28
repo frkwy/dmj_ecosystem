@@ -1,4 +1,0 @@
-Flask
-slackclient
-marathon
-requests
