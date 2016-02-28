@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-
 import os
 import sys
 import yaml
 import requests
 import config
+import argparse
+from jinja2 import Template
+
+
 def get_project_name(yml):
     project_name = yml['Projects']['Name'][0]
     sub_name = '/{}'.format(yml['Projects']['SubName'][0]) if yml['Projects']['SubName'][0] else ''
@@ -14,7 +17,7 @@ def get_project_name(yml):
         version = requests.get("{}/app/{}-{}".format(config.SIMPLE_INCREMENTER, yml['Projects']['Name'][0], sub_name[1:]), timeout=1).json()["next_version"]
     except:
         version = "0.0.1"
-        
+
     if config.SOURCE.endswith(".git"):
         source_path = config.SOURCE.split("/")[-1].replace(".git", "")
         if not os.path.exists(source_path):
@@ -22,15 +25,17 @@ def get_project_name(yml):
 
     return {"name": yml['Projects']['Name'][0], "project_name": id, "sub_name": sub_name[1:], "source_path": source_path, "version": version}
 
+
 def generate_docker_file(destination="test", yml=None, args=None):
     TASK = {"test": "Tests", "build": "Build", "deploy": "Deploy", "slack": "Slack"}
     TASK = yml[TASK[destination]]
     if "Ignore" in TASK and TASK["Ignore"]:
-        return 
+        return
     with open('{}/Dockerfile'.format(destination), 'w') as f:
         f.write("FROM {}\n".format(TASK["From"][0]))
         for d in TASK["Run"].split("\\n"):
-            f.write (d+"\n")
+            f.write(d+"\n")
+
 
 def generate_build_task(destination="test", yml=None):
     TASK = {"test": "Tests", "build": "Build", "deploy": "Deploy", "slack": "Slack"}
@@ -49,37 +54,37 @@ def generate_build_task(destination="test", yml=None):
             f.write('cp base_requirements.txt {}\n'.format(destination))
             f.write('cp notice/notice_container_name_to_slack.py {}\n'.format(destination))
             f.write('cp config.py {}\n'.format(destination))
-        f.write ('cd {} && GIT_REVISION=`git rev-parse  --short HEAD` && cd ..\n'.format(source_path))
+        f.write('cd {} && GIT_REVISION=`git rev-parse  --short HEAD` && cd ..\n'.format(source_path))
         f.write('cp -rf {}/* {}\n'.format(source_path, destination))
-        f.write ('cd {}\n'.format(destination))
+        f.write('cd {}\n'.format(destination))
         build_string = 'docker build -t {project_name} .\n'.format(project_name=project_name)
-        f.write (build_string)
+        f.write(build_string)
         if destination in ("test", "slack"):
             f.write('docker run -t {project_name} {args}\n'.format(project_name=project_name,
                args=task["RUN_COMMAND"][0].replace('"', '\\"') if "RUN_COMMAND" in task and task["RUN_COMMAND"][0] else ""))
         if destination == "build":
-            f.write("docker tag {project_name} {repo_url}/{project_name}\n".format(project_name=project_name, 
-                                                                                 repo_url=config.DOCKER_REPOGITORY_HOST))
-            f.write("docker push {repo_url}/{project_name}\n".format(project_name=project_name, 
+            f.write("docker tag {project_name} {repo_url}/{project_name}\n".format(project_name=project_name,
+                                                                                   repo_url=config.DOCKER_REPOGITORY_HOST))
+            f.write("docker push {repo_url}/{project_name}\n".format(project_name=project_name,
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
-            f.write("docker rmi {repo_url}/{project_name}\n".format(project_name=project_name, 
+            f.write("docker rmi {repo_url}/{project_name}\n".format(project_name=project_name,
                                                                    repo_url=config.DOCKER_REPOGITORY_HOST))
                     
-            f.write ('TO_MARATHON_JSON="{}"\n'.format(yml['Build']['ToMarathon'][0]))
-            f.write ('SOURCE_PATH="{}"\n'.format(source_path))
-            f.write ('NAME="{}-{}"\n'.format(name,sub_name))
-            f.write ('TAG="{}"\n'.format(project_name))
-            f.write ('PUSH_URL="{}"\n'.format(config.DOCKER_REPOGITORY_HOST+os.sep+project_name))
-            f.write ('ID={}/{}\n'.format(project_name, version))
-            f.write ('ARGS="{}"\n'.format(task["ARGS"][0].replace('"', '\\"') if task["ARGS"][0] else []))
+            f.write('TO_MARATHON_JSON="{}"\n'.format(yml['Build']['ToMarathon'][0]))
+            f.write('SOURCE_PATH="{}"\n'.format(source_path))
+            f.write('NAME="{}-{}"\n'.format(name,sub_name))
+            f.write('TAG="{}"\n'.format(project_name))
+            f.write('PUSH_URL="{}"\n'.format(config.DOCKER_REPOGITORY_HOST+os.sep+project_name))
+            f.write('ID={}/{}\n'.format(project_name, version))
+            f.write('ARGS="{}"\n'.format(task["ARGS"][0].replace('"', '\\"') if task["ARGS"][0] else []))
             
             if "ENV" in task:
                 for _env in task["ENV"]:
-                    f.write ('{}={}\n'.format(_env, task["ENV"][_env][0]))
+                    f.write('{}={}\n'.format(_env, task["ENV"][_env][0]))
             else:
                 task["ENV"] = []
-            f.write ('VERSION={}\n'.format(version))
-            f.write ('MARATHON_URL={}\n'.format(config.MARATHON_URL))
+            f.write('VERSION={}\n'.format(version))
+            f.write('MARATHON_URL={}\n'.format(config.MARATHON_URL))
             f.write('''
     JSON=$(cat ${TO_MARATHON_JSON})\n
     JSON="${JSON//%%id%%/${ID}}"\n
@@ -95,7 +100,6 @@ def generate_build_task(destination="test", yml=None):
 
             f.write('''echo "$JSON"\n''')
             f.write('''curl -v -H "Content-Type: application/json" -H "Accept: application/json" -X POST -d "${JSON}" "${MARATHON_URL}v2/apps"''')
-
         #volume = "mkdir -p {}".format(TASK['Volume'][0]) if TASK['Volume'][0] else ''
         #f.write(volume + "\n")
         #if volume:
@@ -106,8 +110,6 @@ def generate_build_task(destination="test", yml=None):
         #                                                                project_name=project_name)
         #f.write (run_string)
 
-import argparse
-from jinja2 import Template
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('phase', default="test", type=str,  help='message')
@@ -128,14 +130,14 @@ if __name__ == '__main__':
             os.system("mkdir -p test")
         except FileExistsError:
             pass
-        
+
         with open('{}'.format(source_path+os.sep+"build.yml", 'r')) as f:
             yml = yaml.load(f.read())
         generate_build_task(args.phase, yml)
-        if generate_docker_file(args.phase, yml, args) == None:
-            print ("yml settings is empty")
+        if generate_docker_file(args.phase, yml, args):
+            print("yml settings is empty")
             sys.exit(1)
-        print ("generate {}.sh".format(args.phase))
+        print("generate {}.sh".format(args.phase))
         os.system("cat  {}.sh".format(args.phase))
         os.system("sh {}.sh".format(args.phase))
         if args.phase == "deploy":
