@@ -48,21 +48,7 @@ Build:
         - '["python", "app.py"]'
 
 Deploy:
-    From:
-        - 'python:latest'
-    Run:
-        >
-        ADD requirements.txt .\n
-        RUN pip install -r requirements.txt\n
-        COPY latest_container_name.py .\n
-        COPY config.py .\n
-        COPY notice_container_name_to_slack.py .\n
-        CMD ["python3", "notice_container_name_to_slack.py", "--token=xxxxxxxxx", "--channel=xxxxxxxx"]\n
-    Phase:
-        - deploy
-    Volume:
-        - null
-    RUN_COMMAND: 
-        - "python3 notice_container_name_to_slack.py --token=xxxxxx --channel=xxxxx"
+    Ignore:
+        -- true
 Source:
     - getting-started-python
