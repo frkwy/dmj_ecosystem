@@ -5,6 +5,7 @@ import sys
 import yaml
 import requests
 import config
+
 def get_project_name(yml):
     project_name = yml['Projects']['Name'][0]
     sub_name = '/{}'.format(yml['Projects']['SubName'][0]) if yml['Projects']['SubName'][0] else ''
