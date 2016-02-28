@@ -1,3 +1,4 @@
 slackclient
 marathon
 requests
+jinja2

@@ -7,16 +7,17 @@ This is continuation integration system of docker, marathon, jenkins
 
 ####test phase
 pip install pyyaml requests
-./task.py test --yaml={yml.path}  
+./task.py test
 
 ####build phase
 pip install pyyaml requests  
-./task.py build --yaml={yml.path}  
+./task.py build
 
 ####deploy phase
 pip install pyyaml requests  
-./task.py deploy  --yaml={yaml} --slack_token={token} --slack_channel={channel}  
+./task.py deploy  --slack_token={token} --slack_channel={channel}  
 
+#### required build.yml
 ```
 Projects:
     Name:
@@ -72,4 +73,13 @@ Deploy:
         -- true
 Source:
     - getting-started-python
+```
+
+##### config.py
+```
+MARATHON_URL = 'http://10.141.141.10:8080/'
+DOCKER_REPOGITORY = 'https://docker.io/'
+DOCKER_REPOGITORY_HOST = 'docker.io'
+SIMPLE_INCREMENTER = 'http://hogehoge.com'
+SOURCE="git@github.com:frkwy/start_python_web.git"
 ```
