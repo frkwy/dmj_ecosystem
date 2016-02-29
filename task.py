@@ -8,7 +8,6 @@ import config
 import argparse
 from jinja2 import Template
 
-
 def get_project_name(yml):
     project_name = yml['Projects']['Name'][0]
     sub_name = '/{}'.format(yml['Projects']['SubName'][0]) if yml['Projects']['SubName'][0] else ''
